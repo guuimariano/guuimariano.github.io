@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brazil Open - Liga Vale</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="liga-vale-logo.jpg" alt="Liga Vale Logo" class="team-logo">
+                </div>
+                <h1 class="title">Brazil Open - PR</h1>
+                <h2 class="subtitle">Liga Vale</h2>
+                <p class="description">Campeonato de Taekwondo - Infantil e Juvenil</p>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-list">
+                <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="#athletes" class="nav-link">Atletas</a></li>
+                <li><a href="#results" class="nav-link">Resultados</a></li>
+                <li><a href="#charts" class="nav-link">Gráficos</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <h2 class="section-title">Dashboard Geral</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total de Atletas</h3>
+                        <span class="stat-number" id="total-athletes">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Vitórias</h3>
+                        <span class="stat-number victories" id="total-victories">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Derrotas</h3>
+                        <span class="stat-number defeats" id="total-defeats">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>A Definir</h3>
+                        <span class="stat-number pending" id="total-pending">0</span>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Aproveitamento por Categoria</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Resultados por Fase</h3>
+                        <canvas id="stageChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Athletes Section -->
+            <section id="athletes" class="section">
+                <h2 class="section-title">Atletas da Liga Vale</h2>
+                
+                <div class="filter-controls">
+                    <select id="category-filter">
+                        <option value="">Todas as Categorias</option>
+                        <option value="INFANTIL">Infantil</option>
+                        <option value="JUVENIL">Juvenil</option>
+                    </select>
+                    <select id="result-filter">
+                        <option value="">Todos os Resultados</option>
+                        <option value="VITÓRIA">Vitórias</option>
+                        <option value="DERROTA">Derrotas</option>
+                        <option value="A Definir">A Definir</option>
+                    </select>
+                </div>
+
+                <div class="athletes-grid" id="athletes-grid">
+                    <!-- Athletes cards will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results" class="section">
+                <h2 class="section-title">Resultados Detalhados</h2>
+                
+                <div class="results-table-container">
+                    <table class="results-table" id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Atleta</th>
+                                <th>Categoria</th>
+                                <th>Peso</th>
+                                <th>Oponente</th>
+                                <th>Fase</th>
+                                <th>Resultado</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Results will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section id="charts" class="section">
+                <h2 class="section-title">Análise de Performance</h2>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Aproveitamento por Atleta</h3>
+                        <canvas id="athletePerformanceChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Aproveitamento por Round</h3>
+                        <canvas id="roundPerformanceChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="individual-charts" id="individual-charts">
+                    <!-- Individual athlete charts will be populated by JavaScript -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal for editing results -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Resultado</h2>
+            <form id="edit-form">
+                <div class="form-group">
+                    <label for="athlete-name">Atleta:</label>
+                    <input type="text" id="athlete-name" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="opponent-name">Oponente:</label>
+                    <input type="text" id="opponent-name">
+                </div>
+                <div class="form-group">
+                    <label for="opponent-team">Equipe do Oponente:</label>
+                    <input type="text" id="opponent-team">
+                </div>
+                <div class="form-group">
+                    <label for="stage">Fase:</label>
+                    <select id="stage">
+                        <option value="Oitavas de Final">Oitavas de Final</option>
+                        <option value="Quartas de Final">Quartas de Final</option>
+                        <option value="Semi Final">Semi Final</option>
+                        <option value="Final">Final</option>
+                        <option value="A Definir">A Definir</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="coach">Técnico:</label>
+                    <input type="text" id="coach">
+                </div>
+                
+                <div class="rounds-section">
+                    <h3>Rounds</h3>
+                    <div id="rounds-container">
+                        <!-- Rounds will be populated dynamically -->
+                    </div>
+                    <button type="button" id="add-round">Adicionar Round</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit">Salvar</button>
+                    <button type="button" id="cancel-edit">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="advanced-features.js"></script>
+</body>
+</html>
