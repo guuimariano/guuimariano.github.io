@@ -432,15 +432,27 @@ function handleFileImport(event) {
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
+            const applyImportedState = (fightsArray, fullState) => {
+                if (typeof window.hydrateFromTournamentState === 'function' && fullState) {
+                    window.hydrateFromTournamentState(fullState);
+                } else {
+                    window.athletesData = fightsArray;
+                }
+                saveData();
+                updateDashboard();
+                populateAthletes();
+                populateResults();
+                createCharts();
+                alert('Dados importados com sucesso!');
+            };
+
             if (Array.isArray(importedData)) {
                 if (confirm('Isso irá substituir todos os dados atuais. Continuar?')) {
-                    athletesData = importedData;
-                    saveData();
-                    updateDashboard();
-                    populateAthletes();
-                    populateResults();
-                    createCharts();
-                    alert('Dados importados com sucesso!');
+                    applyImportedState(importedData);
+                }
+            } else if (importedData && typeof importedData === 'object' && Array.isArray(importedData.fights)) {
+                if (confirm('Isso irá substituir todos os dados atuais. Continuar?')) {
+                    applyImportedState(importedData.fights, importedData);
                 }
             } else {
                 alert('Formato de arquivo inválido.');
@@ -454,15 +466,27 @@ function handleFileImport(event) {
 
 // Reset data
 function resetData() {
-    if (confirm('Isso irá apagar todos os dados. Esta ação não pode ser desfeita. Continuar?')) {
-        athletesData = [];
-        localStorage.removeItem('taekwondoData');
+    if (!confirm('Isso irá apagar todos os dados. Esta ação não pode ser desfeita. Continuar?')) {
+        return;
+    }
+
+    if (typeof window.resetTournamentData === 'function') {
+        window.resetTournamentData();
+    } else {
+        window.athletesData = [];
+        try {
+            localStorage.removeItem('tournamentState');
+        } catch (error) {
+            console.warn('Falha ao limpar storage:', error);
+        }
+        saveData();
         updateDashboard();
         populateAthletes();
         populateResults();
         createCharts();
-        alert('Dados resetados com sucesso!');
     }
+
+    alert('Dados resetados com sucesso!');
 }
 
 // Search functionality
