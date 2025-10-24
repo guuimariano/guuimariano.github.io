@@ -11,13 +11,13 @@ window.__appModules = {
 };
 
 // Global state managed via the data-store module
-let tournamentState = DataStoreModule.getDefaultTournamentState();
+let tournamentState = DataStoreModule.withAnalytics(DataStoreModule.getDefaultTournamentState());
 let athletesData = tournamentState.fights || [];
 let currentEditingIndex = -1;
 
 function hydrateFromTournamentState(state) {
     const baseState = DataStoreModule.getDefaultTournamentState();
-    tournamentState = { ...baseState, ...state };
+    tournamentState = DataStoreModule.withAnalytics({ ...baseState, ...state });
     athletesData = tournamentState.fights || [];
     window.athletesData = athletesData;
     return athletesData;
@@ -129,15 +129,11 @@ function setupNavigation() {
 
 // Update dashboard statistics
 function updateDashboard() {
-    const totalAthletes = athletesData.length;
-    const victories = athletesData.filter(athlete => athlete.fight_result === 'VITÓRIA').length;
-    const defeats = athletesData.filter(athlete => athlete.fight_result === 'DERROTA').length;
-    const pending = athletesData.filter(athlete => athlete.fight_result === 'A Definir').length;
-    
-    document.getElementById('total-athletes').textContent = totalAthletes;
-    document.getElementById('total-victories').textContent = victories;
-    document.getElementById('total-defeats').textContent = defeats;
-    document.getElementById('total-pending').textContent = pending;
+    const totals = DataStoreModule.computeTotals(tournamentState);
+    document.getElementById('total-athletes').textContent = totals.fights;
+    document.getElementById('total-victories').textContent = totals.wins;
+    document.getElementById('total-defeats').textContent = totals.losses;
+    document.getElementById('total-pending').textContent = totals.pending;
 }
 
 // Populate athletes grid
