@@ -19,6 +19,7 @@ body {
     --color-danger: #DF3F40;
     --color-surface: #FFFFFF;
     --color-bg: #f5f5f5;
+    --chart-height: 320px;
 
     --radius-sm: 6px;
     --radius-md: 6px;
@@ -212,6 +213,10 @@ body {
     padding: 2rem;
     border-radius: var(--radius-md);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    position: relative;
+    height: var(--chart-height);
+    display: flex;
+    flex-direction: column;
 }
 
 .chart-container h3 {
@@ -219,6 +224,13 @@ body {
     margin-bottom: 1.5rem;
     color: #1e3c72;
     font-size: 1.3rem;
+}
+
+.chart-container > canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    flex: 1 1 auto;
 }
 
 /* Filter Controls */
@@ -566,6 +578,7 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    :root { --chart-height: 260px; }
     .title {
         font-size: 2rem;
     }
