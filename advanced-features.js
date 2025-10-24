@@ -665,4 +665,20 @@ function setupQuickEntryModals(){
     validate:(m)=>{const name=m.querySelector('#location-name')?.value.trim(); if(!name){alert('Informe o nome do local'); return false} return true},
     submit:(m)=>{const name=m.querySelector('#location-name')?.value.trim(); const ids=[...m.querySelectorAll('#location-coaches input[type="checkbox"]:checked')].map(x=>x.value); if(typeof window.us4OnLocationSubmit==='function') window.us4OnLocationSubmit(name, ids)}
   });
+
+  const penaltyModal=ensureModal('penalty-modal','Adicionar Penalidade',
+    `<div class="form-group"><label for="penalty-name">Nome</label><input id="penalty-name" type="text" required></div>
+     <div class="form-group"><label for="penalty-severity">Severidade</label>
+       <select id="penalty-severity">
+         <option value="MINOR">MINOR</option>
+         <option value="MAJOR">MAJOR</option>
+         <option value="DISQUALIFYING">DISQUALIFYING</option>
+       </select>
+     </div>
+     <div class="form-group"><label for="penalty-desc">Descrição (opcional)</label><input id="penalty-desc" type="text"></div>`
+  );
+  window.modalRegistry.register('penalty-modal',{
+    validate:(m)=>{const n=m.querySelector('#penalty-name')?.value.trim(); if(!n){alert('Informe o nome da penalidade'); return false} return true},
+    submit:(m)=>{const n=m.querySelector('#penalty-name')?.value.trim(); const s=m.querySelector('#penalty-severity')?.value; const d=m.querySelector('#penalty-desc')?.value.trim(); if(typeof window.us5OnPenaltySubmit==='function') window.us5OnPenaltySubmit({name:n, severity:s, description:d})}
+  });
 }

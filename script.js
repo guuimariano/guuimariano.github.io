@@ -29,9 +29,73 @@ function hydrateFromTournamentState(state) {
     return athletesData;
 }
 
+function setupPenalties() {
+    ensureCollections();
+    const addBtn = document.getElementById('add-penalty');
+    if (addBtn) addBtn.addEventListener('click', () => {
+        if (window.modalRegistry?.open) { window.modalRegistry.open('penalty-modal'); return; }
+        const name = (prompt('Nome da penalidade:') || '').trim();
+        if (!name) return;
+        const severity = (prompt('Severidade (MINOR/MAJOR/DISQUALIFYING):') || 'MINOR').trim().toUpperCase();
+        const description = (prompt('Descrição (opcional):') || '').trim();
+        us5OnPenaltySubmit({ name, severity, description });
+    });
+}
+
+function isPenaltyInUse(penaltyId) {
+    const fights = tournamentState.fights || [];
+    for (const f of fights) {
+        const ps = f.penaltySummary || [];
+        if (ps.some(p => p.penaltyTypeId === penaltyId || p.penalty_type_id === penaltyId)) return true;
+        for (const r of (f.rounds || [])) {
+            const rs = r.penalties || [];
+            if (rs.some(p => p.penaltyTypeId === penaltyId || p.penalty_type_id === penaltyId)) return true;
+        }
+    }
+    return false;
+}
+
+function refreshPenaltiesUI() {
+    ensureCollections();
+    const mount = document.getElementById('penalties-list');
+    if (!mount) return;
+    mount.innerHTML = '';
+    const handlers = {
+        onEdit: (pt) => {
+            const name = (prompt('Nome da penalidade:', pt.name || '') || '').trim();
+            if (!name) return;
+            const severity = (prompt('Severidade (MINOR/MAJOR/DISQUALIFYING):', pt.severity || 'MINOR') || 'MINOR').trim().toUpperCase();
+            const description = (prompt('Descrição (opcional):', pt.description || '') || '').trim();
+            pt.name = name; pt.severity = severity; pt.description = description; pt.updatedAt = new Date().toISOString();
+            saveData();
+            refreshPenaltiesUI();
+        },
+        onDelete: (pt) => {
+            if (isPenaltyInUse(pt.id)) { alert('Não é possível excluir penalidade em uso.'); return; }
+            if (!confirm('Excluir penalidade?')) return;
+            tournamentState.penaltyTypes = tournamentState.penaltyTypes.filter(x => x.id !== pt.id);
+            saveData();
+            refreshPenaltiesUI();
+        }
+    };
+    mount.appendChild(PenaltiesTemplates.renderPenaltiesList(tournamentState.penaltyTypes, handlers));
+}
+
+function us5OnPenaltySubmit(input) {
+    ensureCollections();
+    const name = String(input?.name || '').trim();
+    if (!name) return;
+    const severity = ['MINOR','MAJOR','DISQUALIFYING'].includes(String(input?.severity || '').toUpperCase()) ? String(input.severity).toUpperCase() : 'MINOR';
+    const description = String(input?.description || '').trim();
+    tournamentState.penaltyTypes.push({ id: uuid(), name, severity, description, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    saveData();
+    refreshPenaltiesUI();
+}
+
 function ensureCollections() {
     tournamentState.coaches = Array.isArray(tournamentState.coaches) ? tournamentState.coaches : [];
     tournamentState.trainingLocations = Array.isArray(tournamentState.trainingLocations) ? tournamentState.trainingLocations : [];
+    tournamentState.penaltyTypes = Array.isArray(tournamentState.penaltyTypes) ? tournamentState.penaltyTypes : [];
 }
 
 function uuid() {
@@ -217,6 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshCoachesUI();
     refreshLocationsUI();
     updateCoachOptions();
+    setupPenalties();
+    refreshPenaltiesUI();
 });
 
 function loadData() {
@@ -256,6 +322,7 @@ function resetTournamentData() {
     refreshCoachesUI();
     refreshLocationsUI();
     updateCoachOptions();
+    refreshPenaltiesUI();
     return resetState;
 }
 // Navigation setup
