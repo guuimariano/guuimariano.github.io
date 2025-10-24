@@ -4,6 +4,7 @@ import * as DataStoreModule from './modules/data-store.js';
 import * as ExportsModule from './modules/exports.js';
 import * as AthleteTemplates from './templates/athletes.js';
 import * as FightTemplates from './templates/fights.js';
+import * as PenaltiesTemplates from './templates/penalties.js';
 
 window.__appModules = {
     tabs: TabsModule,
@@ -12,6 +13,7 @@ window.__appModules = {
     exports: ExportsModule,
     athletes: AthleteTemplates,
     fights: FightTemplates,
+    penalties: PenaltiesTemplates,
 };
 
 // Global state managed via the data-store module
@@ -25,6 +27,139 @@ function hydrateFromTournamentState(state) {
     athletesData = tournamentState.fights || [];
     window.athletesData = athletesData;
     return athletesData;
+}
+
+function ensureCollections() {
+    tournamentState.coaches = Array.isArray(tournamentState.coaches) ? tournamentState.coaches : [];
+    tournamentState.trainingLocations = Array.isArray(tournamentState.trainingLocations) ? tournamentState.trainingLocations : [];
+}
+
+function uuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function isCoachNameTaken(name, exceptId) {
+    const n = String(name || '').trim().toLowerCase();
+    return (tournamentState.coaches || []).some(c => c.id !== exceptId && String(c.fullName || '').trim().toLowerCase() === n);
+}
+
+function setupCoachesLocations() {
+    ensureCollections();
+    const addCoachBtn = document.getElementById('add-coach');
+    const addLocBtn = document.getElementById('add-location');
+    if (addCoachBtn) addCoachBtn.addEventListener('click', () => {
+        if (window.modalRegistry?.open) { window.modalRegistry.open('coach-modal'); return; }
+        const name = (prompt('Nome do técnico:') || '').trim();
+        if (!name) return;
+        if (isCoachNameTaken(name)) { alert('Nome de técnico já existe.'); return; }
+        tournamentState.coaches.push({ id: uuid(), fullName: name, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        saveData();
+        refreshCoachesUI();
+        updateCoachOptions();
+    });
+    if (addLocBtn) addLocBtn.addEventListener('click', () => {
+        if (window.modalRegistry?.open) { window.modalRegistry.open('location-modal'); return; }
+        const name = (prompt('Nome do local de treino:') || '').trim();
+        if (!name) return;
+        tournamentState.trainingLocations.push({ id: uuid(), name, responsibleCoachIds: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        saveData();
+        refreshLocationsUI();
+    });
+}
+
+function refreshCoachesUI() {
+    ensureCollections();
+    const mount = document.getElementById('coaches-list');
+    if (!mount) return;
+    mount.innerHTML = '';
+    const handlers = {
+        onEdit: (coach) => {
+            const newName = (prompt('Novo nome do técnico:', coach.fullName || '') || '').trim();
+            if (!newName) return;
+            if (isCoachNameTaken(newName, coach.id)) { alert('Nome de técnico já existe.'); return; }
+            const oldName = coach.fullName;
+            coach.fullName = newName;
+            coach.updatedAt = new Date().toISOString();
+            // Sync references in fights
+            (tournamentState.fights || []).forEach(f => { if (f.coach === oldName) f.coach = newName; });
+            saveData();
+            refreshCoachesUI();
+            updateCoachOptions();
+            populateResults();
+            createCharts();
+        },
+        onDelete: (coach) => {
+            if (!confirm('Excluir técnico?')) return;
+            const oldName = coach.fullName;
+            tournamentState.coaches = tournamentState.coaches.filter(c => c.id !== coach.id);
+            (tournamentState.fights || []).forEach(f => { if (f.coach === oldName) f.coach = ''; });
+            saveData();
+            refreshCoachesUI();
+            updateCoachOptions();
+            populateResults();
+            createCharts();
+        }
+    };
+    mount.appendChild(PenaltiesTemplates.renderCoachesList(tournamentState.coaches, handlers));
+}
+
+function refreshLocationsUI() {
+    ensureCollections();
+    const mount = document.getElementById('locations-list');
+    if (!mount) return;
+    mount.innerHTML = '';
+    const handlers = {
+        onEdit: (loc) => {
+            const newName = (prompt('Novo nome do local:', loc.name || '') || '').trim();
+            if (!newName) return;
+            loc.name = newName;
+            loc.updatedAt = new Date().toISOString();
+            saveData();
+            refreshLocationsUI();
+        },
+        onDelete: (loc) => {
+            if (!confirm('Excluir local?')) return;
+            tournamentState.trainingLocations = tournamentState.trainingLocations.filter(l => l.id !== loc.id);
+            saveData();
+            refreshLocationsUI();
+        }
+    };
+    mount.appendChild(PenaltiesTemplates.renderTrainingLocationsList(tournamentState.trainingLocations, tournamentState.coaches, handlers));
+}
+
+function updateCoachOptions() {
+    const dataList = document.getElementById('coach-options');
+    if (!dataList) return;
+    dataList.innerHTML = '';
+    (tournamentState.coaches || []).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.fullName || '';
+        dataList.appendChild(opt);
+    });
+}
+
+function us4OnCoachSubmit(name) {
+    ensureCollections();
+    const n = String(name || '').trim();
+    if (!n) return;
+    if (isCoachNameTaken(n)) { alert('Nome de técnico já existe.'); return; }
+    tournamentState.coaches.push({ id: uuid(), fullName: n, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    saveData();
+    refreshCoachesUI();
+    updateCoachOptions();
+}
+
+function us4OnLocationSubmit(name, coachIds) {
+    ensureCollections();
+    const n = String(name || '').trim();
+    if (!n) return;
+    const ids = Array.isArray(coachIds) ? coachIds.filter(Boolean) : [];
+    tournamentState.trainingLocations.push({ id: uuid(), name: n, responsibleCoachIds: ids, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    saveData();
+    refreshLocationsUI();
 }
 
 function setGlobalAccessor(key, { get, set }) {
@@ -78,6 +213,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFilters();
     setupFightFilters();
     mountAnalysisExportBar();
+    setupCoachesLocations();
+    refreshCoachesUI();
+    refreshLocationsUI();
+    updateCoachOptions();
 });
 
 function loadData() {
@@ -114,6 +253,9 @@ function resetTournamentData() {
     populateAthletes();
     populateResults();
     createCharts();
+    refreshCoachesUI();
+    refreshLocationsUI();
+    updateCoachOptions();
     return resetState;
 }
 // Navigation setup
@@ -582,6 +724,11 @@ Object.assign(window, {
     mountAnalysisExportBar,
     getFilteredRoster,
     mountAthleteExportBar,
+    refreshCoachesUI,
+    refreshLocationsUI,
+    updateCoachOptions,
+    us4OnCoachSubmit,
+    us4OnLocationSubmit,
     setActiveTab: TabsModule.setActiveTab,
     getActiveTabId: TabsModule.getActiveTabId,
     setupModal,

@@ -560,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         initializeAdvancedFeatures();
         setupAutoSave();
+        if (typeof setupQuickEntryModals === 'function') setupQuickEntryModals();
     }, 100);
 });
 
@@ -615,3 +616,53 @@ window.createFieldRepeater=createRepeater;
 })();
 
 try { window.openAddFightModal = openAddAthleteModal; } catch(_e) {}
+
+function setupQuickEntryModals(){
+  const ensureModal=(id, title, bodyHTML)=>{
+    let modal=document.getElementById(id);
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id=id;
+      modal.className='modal';
+      modal.innerHTML=`<div class="modal-content"><span class="close">&times;</span><h2>${title}</h2><form>${bodyHTML}<div class="form-actions"><button type="submit">Salvar</button><button type="button" data-action="cancel">Cancelar</button></div></form></div>`;
+      document.body.appendChild(modal);
+      const closeBtn=modal.querySelector('.close');
+      const cancelBtn=modal.querySelector('[data-action="cancel"]');
+      const hide=()=>{modal.style.display='none'};
+      if(closeBtn) closeBtn.addEventListener('click', hide);
+      if(cancelBtn) cancelBtn.addEventListener('click', hide);
+    }
+    return modal;
+  };
+  const coachModal=ensureModal('coach-modal','Adicionar Técnico',
+    `<div class="form-group"><label for="coach-name">Nome do técnico</label><input id="coach-name" type="text" required></div>`
+  );
+  window.modalRegistry.register('coach-modal',{
+    validate:(m)=>{const v=m.querySelector('#coach-name')?.value.trim(); if(!v){alert('Informe o nome do técnico'); return false} return true},
+    submit:(m)=>{const name=m.querySelector('#coach-name')?.value.trim(); if(typeof window.us4OnCoachSubmit==='function') window.us4OnCoachSubmit(name)}
+  });
+  const locationModal=ensureModal('location-modal','Adicionar Local de Treino',
+    `<div class="form-group"><label for="location-name">Nome do local</label><input id="location-name" type="text" required></div><div class="form-group" id="location-coaches"></div>`
+  );
+  window.modalRegistry.register('location-modal',{
+    onOpen:(m)=>{
+      const box=m.querySelector('#location-coaches');
+      if(!box) return;
+      box.innerHTML='';
+      const list=document.createElement('div');
+      const src=(window.tournamentState&&Array.isArray(window.tournamentState.coaches))?window.tournamentState.coaches:[];
+      src.forEach(c=>{
+        const lbl=document.createElement('label');
+        lbl.style.display='flex';lbl.style.alignItems='center';lbl.style.gap='6px';
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.value=c.id||'';
+        lbl.appendChild(cb);
+        lbl.appendChild(document.createTextNode(c.fullName||'—'));
+        list.appendChild(lbl);
+      });
+      const title=document.createElement('div'); title.textContent='Técnicos responsáveis'; title.style.fontWeight='600'; title.style.marginBottom='0.25rem';
+      box.appendChild(title); box.appendChild(list);
+    },
+    validate:(m)=>{const name=m.querySelector('#location-name')?.value.trim(); if(!name){alert('Informe o nome do local'); return false} return true},
+    submit:(m)=>{const name=m.querySelector('#location-name')?.value.trim(); const ids=[...m.querySelectorAll('#location-coaches input[type="checkbox"]:checked')].map(x=>x.value); if(typeof window.us4OnLocationSubmit==='function') window.us4OnLocationSubmit(name, ids)}
+  });
+}
