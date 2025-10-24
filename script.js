@@ -130,10 +130,10 @@ function setupNavigation() {
 // Update dashboard statistics
 function updateDashboard() {
     const totals = DataStoreModule.computeTotals(tournamentState);
-    document.getElementById('total-athletes').textContent = totals.fights;
-    document.getElementById('total-victories').textContent = totals.wins;
-    document.getElementById('total-defeats').textContent = totals.losses;
-    document.getElementById('total-pending').textContent = totals.pending;
+    document.getElementById('total-athletes').textContent = totals.athletes ?? totals.fights ?? 0;
+    document.getElementById('total-victories').textContent = totals.wins ?? 0;
+    document.getElementById('total-defeats').textContent = totals.losses ?? 0;
+    document.getElementById('total-pending').textContent = totals.pending ?? 0;
 }
 
 // Populate athletes grid
@@ -231,246 +231,15 @@ function getFilteredAthletes() {
     });
 }
 
-// Create charts
+let chartsInitialized = false;
+
 function createCharts() {
-    createCategoryChart();
-    createStageChart();
-    createAthletePerformanceChart();
-    createRoundPerformanceChart();
-    createIndividualCharts();
-}
-
-// Category chart
-function createCategoryChart() {
-    const ctx = document.getElementById('categoryChart').getContext('2d');
-    
-    const infantilAthletes = athletesData.filter(a => a.category === 'INFANTIL');
-    const juvenilAthletes = athletesData.filter(a => a.category === 'JUVENIL');
-    
-    const infantilVictories = infantilAthletes.filter(a => a.fight_result === 'VITÓRIA').length;
-    const infantilDefeats = infantilAthletes.filter(a => a.fight_result === 'DERROTA').length;
-    const juvenilVictories = juvenilAthletes.filter(a => a.fight_result === 'VITÓRIA').length;
-    const juvenilDefeats = juvenilAthletes.filter(a => a.fight_result === 'DERROTA').length;
-    
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Infantil', 'Juvenil'],
-            datasets: [{
-                label: 'Vitórias',
-                data: [infantilVictories, juvenilVictories],
-                backgroundColor: '#28a745',
-                borderColor: '#1e7e34',
-                borderWidth: 2
-            }, {
-                label: 'Derrotas',
-                data: [infantilDefeats, juvenilDefeats],
-                backgroundColor: '#dc3545',
-                borderColor: '#c82333',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Stage chart
-function createStageChart() {
-    const ctx = document.getElementById('stageChart').getContext('2d');
-    
-    const stages = ['Oitavas de Final', 'Quartas de Final', 'Semi Final', 'Final'];
-    const stageData = stages.map(stage => {
-        const stageAthletes = athletesData.filter(a => a.stage === stage);
-        const victories = stageAthletes.filter(a => a.fight_result === 'VITÓRIA').length;
-        const defeats = stageAthletes.filter(a => a.fight_result === 'DERROTA').length;
-        const pending = stageAthletes.filter(a => a.fight_result === 'A Definir').length;
-        return { stage, victories, defeats, pending };
-    });
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: stages,
-            datasets: [{
-                data: stageData.map(s => s.victories + s.defeats + s.pending),
-                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                }
-            }
-        }
-    });
-}
-
-// Athlete performance chart
-function createAthletePerformanceChart() {
-    const ctx = document.getElementById('athletePerformanceChart').getContext('2d');
-    
-    const athletesWithRounds = athletesData.filter(a => a.rounds.length > 0);
-    const athleteNames = athletesWithRounds.map(a => a.athlete_name);
-    const winRates = athletesWithRounds.map(athlete => {
-        const totalRounds = athlete.rounds.length;
-        const wonRounds = athlete.rounds.filter(r => r.round_outcome === 'VITÓRIA').length;
-        return totalRounds > 0 ? (wonRounds / totalRounds) * 100 : 0;
-    });
-    
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: athleteNames,
-            datasets: [{
-                label: 'Aproveitamento (%)',
-                data: winRates,
-                backgroundColor: winRates.map(rate => rate >= 50 ? '#28a745' : '#dc3545'),
-                borderColor: winRates.map(rate => rate >= 50 ? '#1e7e34' : '#c82333'),
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            indexAxis: 'y',
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Round performance chart
-function createRoundPerformanceChart() {
-    const ctx = document.getElementById('roundPerformanceChart').getContext('2d');
-    
-    const allRounds = athletesData.flatMap(a => a.rounds);
-    const roundNumbers = [1, 2, 3];
-    const roundData = roundNumbers.map(roundNum => {
-        const roundsOfNumber = allRounds.filter(r => r.round_number === roundNum);
-        const victories = roundsOfNumber.filter(r => r.round_outcome === 'VITÓRIA').length;
-        const defeats = roundsOfNumber.filter(r => r.round_outcome === 'DERROTA').length;
-        return { roundNum, victories, defeats };
-    });
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['1º Round', '2º Round', '3º Round'],
-            datasets: [{
-                label: 'Vitórias',
-                data: roundData.map(r => r.victories),
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                tension: 0.4,
-                fill: true
-            }, {
-                label: 'Derrotas',
-                data: roundData.map(r => r.defeats),
-                borderColor: '#dc3545',
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Create individual athlete charts
-function createIndividualCharts() {
-    const individualChartsContainer = document.getElementById('individual-charts');
-    individualChartsContainer.innerHTML = '';
-    
-    const athletesWithRounds = athletesData.filter(a => a.rounds.length > 0);
-    
-    athletesWithRounds.forEach((athlete, index) => {
-        const chartContainer = document.createElement('div');
-        chartContainer.className = 'chart-container';
-        chartContainer.innerHTML = `
-            <h3>${athlete.athlete_name} - Desempenho por Round</h3>
-            <canvas id="individualChart${index}"></canvas>
-        `;
-        individualChartsContainer.appendChild(chartContainer);
-        
-        const ctx = document.getElementById(`individualChart${index}`).getContext('2d');
-        
-        new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: athlete.rounds.map(r => `Round ${r.round_number}`),
-                datasets: [{
-                    label: 'Pontuação',
-                    data: athlete.rounds.map(r => r.score_our_athlete || 0),
-                    borderColor: athlete.fight_result === 'VITÓRIA' ? '#28a745' : '#dc3545',
-                    backgroundColor: athlete.fight_result === 'VITÓRIA' ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)',
-                    pointBackgroundColor: athlete.rounds.map(r => r.round_outcome === 'VITÓRIA' ? '#28a745' : '#dc3545'),
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: athlete.fight_result === 'VITÓRIA' ? '#28a745' : '#dc3545'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: Math.max(...athlete.rounds.map(r => Math.max(r.score_our_athlete || 0, r.score_opponent || 0))) + 5
-                    }
-                }
-            }
-        });
-    });
+    if (!chartsInitialized) {
+        ChartsModule.initializeCharts(tournamentState);
+        chartsInitialized = true;
+    } else {
+        ChartsModule.refreshCharts(tournamentState);
+    }
 }
 
 // Modal setup
@@ -680,11 +449,6 @@ Object.assign(window, {
     setupFilters,
     getFilteredAthletes,
     createCharts,
-    createCategoryChart,
-    createStageChart,
-    createAthletePerformanceChart,
-    createRoundPerformanceChart,
-    createIndividualCharts,
     setupModal,
     openEditModal,
     closeModal,

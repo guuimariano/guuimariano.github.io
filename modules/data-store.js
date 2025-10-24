@@ -154,6 +154,7 @@ export function computeAnalytics(snapshot) {
         wins: 0,
         losses: 0,
         pending: 0,
+        athletes: 0,
     };
 
     const winsByCategory = new Map();
@@ -168,6 +169,8 @@ export function computeAnalytics(snapshot) {
         DERROTA: 'losses',
         'A Definir': 'pending',
     };
+
+    const athleteIds = new Set();
 
     fights.forEach((fight) => {
         const resultKey = bucketMap[fight.fight_result] || 'pending';
@@ -184,6 +187,7 @@ export function computeAnalytics(snapshot) {
         winsByPhase.set(phaseKey, phaseBucket);
 
         const athleteKey = fight.athlete_name || 'Sem atleta';
+        athleteIds.add(athleteKey);
         const athleteEntry = athleteSummary.get(athleteKey) || { wins: 0, total: 0 };
         if (resultKey === 'wins') athleteEntry.wins += 1;
         athleteEntry.total += 1;
@@ -276,6 +280,8 @@ export function computeAnalytics(snapshot) {
         penalties: stats.penalties,
         fights: stats.fights,
     }));
+
+    totals.athletes = athleteIds.size;
 
     return {
         totals,
