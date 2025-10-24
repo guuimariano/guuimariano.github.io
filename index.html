@@ -77,7 +77,7 @@
             <section id="coaches" class="section">
                 <h2 class="section-title">Técnicos</h2>
                 <div class="filter-controls">
-                    <button id="add-coach" class="edit-btn">+ Add Coach</button>
+                    <button id="add-coach" class="edit-btn" aria-label="Adicionar Técnico" title="Adicionar Técnico">+ Add Coach</button>
                 </div>
                 <div class="p-4 rounded-6 shadow-sm" id="coaches-list" style="background:#fff;"></div>
             </section>
@@ -86,7 +86,7 @@
             <section id="training-locations" class="section">
                 <h2 class="section-title">Locais de Treino</h2>
                 <div class="filter-controls">
-                    <button id="add-location" class="edit-btn">+ Add Location</button>
+                    <button id="add-location" class="edit-btn" aria-label="Adicionar Local de Treino" title="Adicionar Local de Treino">+ Add Location</button>
                 </div>
                 <div class="p-4 rounded-6 shadow-sm" id="locations-list" style="background:#fff;"></div>
             </section>
@@ -95,7 +95,7 @@
             <section id="penalties" class="section">
                 <h2 class="section-title">Penalidades</h2>
                 <div class="filter-controls">
-                    <button id="add-penalty" class="edit-btn">+ Add Penalty</button>
+                    <button id="add-penalty" class="edit-btn" aria-label="Adicionar Penalidade" title="Adicionar Penalidade">+ Add Penalty</button>
                 </div>
                 <div class="p-4 rounded-6 shadow-sm" id="penalties-list" style="background:#fff;"></div>
             </section>
@@ -116,6 +116,24 @@
                         <option value="DERROTA">Derrotas</option>
                         <option value="A Definir">A Definir</option>
                     </select>
+                </div>
+
+                <div class="results-table-container" id="athletes-table-container">
+                    <table class="results-table" id="athletes-table">
+                        <thead>
+                            <tr>
+                                <th>Atleta</th>
+                                <th>Categoria</th>
+                                <th>Peso</th>
+                                <th>Oponente</th>
+                                <th>Fase</th>
+                                <th>Técnico</th>
+                                <th>Resultado</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
 
                 <div class="athletes-grid" id="athletes-grid">
@@ -145,7 +163,7 @@
                         <option value="table">Tabela</option>
                         <option value="cards">Cards</option>
                     </select>
-                    <button id="add-fight" class="edit-btn">+ Add Fight</button>
+                    <button id="add-fight" class="edit-btn" aria-label="Adicionar Luta" title="Adicionar Luta">+ Add Fight</button>
                 </div>
 
                 <div class="results-table-container">
@@ -202,10 +220,10 @@
     </main>
 
     <!-- Modal for editing results -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Editar Resultado</h2>
+    <div id="edit-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <div class="modal-content" role="document" tabindex="-1">
+            <span class="close" aria-label="Fechar">&times;</span>
+            <h2 id="edit-modal-title">Editar Resultado</h2>
             <form id="edit-form">
                 <div class="form-group">
                     <label for="athlete-name">Atleta:</label>

@@ -571,8 +571,23 @@ function open(id){
   const cfg=r.get(id);
   const modal=document.getElementById(id);
   if(!modal)return false;
+  const prev=document.activeElement; if(prev){try{prev.setAttribute('data-prev-focus','true')}catch(_e){}}
   modal.style.display='block';
   if(cfg&&typeof cfg.onOpen==='function'){try{cfg.onOpen(modal)}catch(e){}}
+  // Focus management & trap
+  const focusables=modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+  const first=focusables[0];
+  const last=focusables[focusables.length-1];
+  if(first){first.focus()} else {modal.querySelector('.modal-content')?.focus?.()}
+  const trap=(e)=>{
+    if(e.key==='Escape'){ close(id); }
+    if(e.key==='Tab'){
+      if(focusables.length===0){e.preventDefault(); return}
+      if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+    }
+  };
+  modal.__trapListener=trap; modal.addEventListener('keydown', trap);
   const form=modal.querySelector('form');
   if(form&&!form.__bound){
     form.addEventListener('submit',(e)=>{
@@ -624,11 +639,15 @@ function setupQuickEntryModals(){
       modal=document.createElement('div');
       modal.id=id;
       modal.className='modal';
-      modal.innerHTML=`<div class="modal-content"><span class="close">&times;</span><h2>${title}</h2><form>${bodyHTML}<div class="form-actions"><button type="submit">Salvar</button><button type="button" data-action="cancel">Cancelar</button></div></form></div>`;
+      const titleId=`${id}-title`;
+      modal.setAttribute('role','dialog');
+      modal.setAttribute('aria-modal','true');
+      modal.setAttribute('aria-labelledby', titleId);
+      modal.innerHTML=`<div class="modal-content" role="document" tabindex="-1"><span class="close" aria-label="Fechar">&times;</span><h2 id="${titleId}">${title}</h2><form>${bodyHTML}<div class="form-actions"><button type="submit">Salvar</button><button type="button" data-action="cancel" aria-label="Cancelar">Cancelar</button></div></form></div>`;
       document.body.appendChild(modal);
       const closeBtn=modal.querySelector('.close');
       const cancelBtn=modal.querySelector('[data-action="cancel"]');
-      const hide=()=>{modal.style.display='none'};
+      const hide=()=>{modal.style.display='none'; const prev=document.querySelector('[data-prev-focus="true"]'); if(prev){prev.removeAttribute('data-prev-focus'); prev.focus?.()} modal.removeEventListener('keydown', modal.__trapListener || (()=>{}));};
       if(closeBtn) closeBtn.addEventListener('click', hide);
       if(cancelBtn) cancelBtn.addEventListener('click', hide);
     }

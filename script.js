@@ -349,7 +349,9 @@ function updateDashboard() {
 // Populate athletes grid
 function populateAthletes() {
     const athletesGrid = document.getElementById('athletes-grid');
+    const athletesTableBody = document.querySelector('#athletes-table tbody');
     athletesGrid.innerHTML = '';
+    if (athletesTableBody) athletesTableBody.innerHTML = '';
     
     const filteredAthletes = getFilteredAthletes();
     if (!filteredAthletes.length) {
@@ -363,6 +365,25 @@ function populateAthletes() {
     const frag = AthleteTemplates.renderAthleteCards(filteredAthletes);
     athletesGrid.appendChild(frag);
     mountAthleteExportBar(filteredAthletes);
+
+    if (athletesTableBody) {
+        filteredAthletes.forEach((athlete, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${athlete.athlete_name}</td>
+                <td>${athlete.category}</td>
+                <td>${athlete.weight_class}</td>
+                <td>${athlete.opponent_name}</td>
+                <td>${athlete.stage}</td>
+                <td>${athlete.coach || 'N/A'}</td>
+                <td><span class="result-badge ${getResultClass(athlete.fight_result)}">${athlete.fight_result}</span></td>
+                <td>
+                  <button class="edit-btn" onclick="openEditModal(${index})" aria-label="Editar luta do atleta">Editar</button>
+                </td>
+            `;
+            athletesTableBody.appendChild(row);
+        });
+    }
 }
 
 // Create athlete card
@@ -391,6 +412,10 @@ function createAthleteCard(athlete, index) {
         </div>
         <div class="fight-result ${getResultClass(athlete.fight_result)}">
             ${athlete.fight_result}
+        </div>
+        <div class="form-actions" style="justify-content:flex-start; gap:.5rem; margin-top:.5rem;">
+            <button class="edit-btn" onclick="openEditModal(${index})" aria-label="Editar luta do atleta">Editar</button>
+            <button class="delete-btn" onclick="deleteAthlete(${index})" aria-label="Excluir atleta">Excluir</button>
         </div>
     `;
     
