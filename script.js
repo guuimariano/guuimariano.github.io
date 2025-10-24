@@ -236,9 +236,20 @@ function setGlobalAccessor(key, { get, set }) {
 }
 
 setGlobalAccessor('athletesData', {
-    get: () => athletesData,
-    set: (value) => {
-        athletesData = Array.isArray(value) ? value : [];
+    get() {
+        return athletesData;
+    },
+    set(val) {
+        athletesData = Array.isArray(val) ? val : [];
+    },
+});
+
+setGlobalAccessor('tournamentState', {
+    get() {
+        return tournamentState;
+    },
+    set(val) {
+        if (val && typeof val === 'object') hydrateFromTournamentState(val);
     },
 });
 
@@ -796,6 +807,8 @@ Object.assign(window, {
     updateCoachOptions,
     us4OnCoachSubmit,
     us4OnLocationSubmit,
+    refreshPenaltiesUI,
+    us5OnPenaltySubmit,
     setActiveTab: TabsModule.setActiveTab,
     getActiveTabId: TabsModule.getActiveTabId,
     setupModal,

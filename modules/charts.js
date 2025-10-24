@@ -40,6 +40,11 @@ function applyDefaults() {
     Chart.defaults.font.size = 13;
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
     Chart.defaults.elements.bar.borderRadius = 6;
+    Chart.defaults.animation = Chart.defaults.animation || {};
+    Chart.defaults.animation.duration = 180;
+    Chart.defaults.animation.easing = 'easeOutQuad';
+    Chart.defaults.responsive = true;
+    Chart.defaults.maintainAspectRatio = false;
     defaultsApplied = true;
 }
 
@@ -61,8 +66,15 @@ function instantiateChart(id, config) {
         return null;
     }
 
-    destroyChart(id);
+    const existing = chartRegistry.get(id);
+    if (existing && existing.config && existing.config.type === config.type) {
+        existing.data = config.data;
+        existing.options = { ...(existing.options || {}), ...(config.options || {}) };
+        existing.update('none');
+        return existing;
+    }
 
+    destroyChart(id);
     const context = canvas.getContext('2d');
     const chart = new Chart(context, config);
     chartRegistry.set(id, chart);

@@ -2,7 +2,7 @@ import { createDefaultFights } from './default-data.js';
 
 const STORAGE_KEY = 'tournamentState';
 const LEGACY_KEY = 'taekwondoData';
-const SCHEMA_VERSION = '1.0.0';
+const SCHEMA_VERSION = '1.1.0';
 
 const migrationPipeline = [];
 
@@ -101,6 +101,25 @@ export function registerMigration(migrateFn) {
         migrationPipeline.push(migrateFn);
     }
 }
+
+registerMigration((state) => {
+    const s = state || {};
+    if (!Array.isArray(s.coaches)) s.coaches = [];
+    if (!Array.isArray(s.trainingLocations)) s.trainingLocations = [];
+    if (!Array.isArray(s.penaltyTypes)) s.penaltyTypes = [];
+    if (!s.analyticsCache || typeof s.analyticsCache !== 'object' || !('totals' in s.analyticsCache)) {
+        s.analyticsCache = {
+            totals: null,
+            winsByCategory: null,
+            winsByPhase: null,
+            performanceByAthlete: null,
+            averagePointsPerRound: null,
+            penaltiesByCoach: null,
+            penaltiesByAthlete: null,
+        };
+    }
+    return s;
+});
 
 export function loadTournamentState() {
     const stored = parseState(readStorage(STORAGE_KEY));
