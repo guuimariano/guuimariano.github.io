@@ -123,7 +123,28 @@
             <!-- Fights Section -->
             <section id="fights" class="section">
                 <h2 class="section-title">Lutas</h2>
-                
+                <div class="filter-controls">
+                    <input type="text" id="fight-search" placeholder="Buscar atleta/oponente/técnico..." style="padding:0.75rem 1rem;border:2px solid #ddd;border-radius:25px;font-size:1rem;min-width:250px;">
+                    <select id="fight-category-filter">
+                        <option value="">Todas as Categorias</option>
+                        <option value="INFANTIL">Infantil</option>
+                        <option value="JUVENIL">Juvenil</option>
+                    </select>
+                    <select id="fight-phase-filter">
+                        <option value="">Todas as Fases</option>
+                        <option value="Oitavas de Final">Oitavas de Final</option>
+                        <option value="Quartas de Final">Quartas de Final</option>
+                        <option value="Semi Final">Semi Final</option>
+                        <option value="Final">Final</option>
+                        <option value="A Definir">A Definir</option>
+                    </select>
+                    <select id="fight-view" style="min-width:160px;padding:0.75rem 1rem;border:2px solid #ddd;border-radius:25px;">
+                        <option value="table">Tabela</option>
+                        <option value="cards">Cards</option>
+                    </select>
+                    <button id="add-fight" class="edit-btn">+ Add Fight</button>
+                </div>
+
                 <div class="results-table-container">
                     <table class="results-table" id="results-table">
                         <thead>
@@ -142,6 +163,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="athletes-grid" id="fights-grid"></div>
             </section>
 
             <!-- Analysis Section -->
@@ -157,11 +179,21 @@
                         <h3>Aproveitamento por Round</h3>
                         <canvas id="roundPerformanceChart"></canvas>
                     </div>
+                    <div class="chart-container">
+                        <h3>Penalidades por Técnico</h3>
+                        <canvas id="penaltiesByCoachChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Penalidades por Atleta</h3>
+                        <canvas id="penaltiesByAthleteChart"></canvas>
+                    </div>
                 </div>
                 
                 <div class="individual-charts" id="individual-charts">
                     <!-- Individual athlete charts will be populated by JavaScript -->
                 </div>
+                <div id="analysis-filter-bar" class="filter-controls" style="margin-top:1rem;"></div>
+                <div id="analysis-export-bar"></div>
             </section>
         </div>
     </main>

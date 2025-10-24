@@ -613,3 +613,5 @@ window.modalRegistry={register:registerModal,open,close,get(id){return r.get(id)
 window.modalDebug={dump(){const list=Array.from(r.keys());try{console.log('Registered modals:',list)}catch(_e){}return list}};
 window.createFieldRepeater=createRepeater;
 })();
+
+try { window.openAddFightModal = openAddAthleteModal; } catch(_e) {}

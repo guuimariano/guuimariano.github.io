@@ -2,12 +2,16 @@ import * as TabsModule from './modules/tabs.js';
 import * as ChartsModule from './modules/charts.js';
 import * as DataStoreModule from './modules/data-store.js';
 import * as ExportsModule from './modules/exports.js';
+import * as AthleteTemplates from './templates/athletes.js';
+import * as FightTemplates from './templates/fights.js';
 
 window.__appModules = {
     tabs: TabsModule,
     charts: ChartsModule,
     dataStore: DataStoreModule,
     exports: ExportsModule,
+    athletes: AthleteTemplates,
+    fights: FightTemplates,
 };
 
 // Global state managed via the data-store module
@@ -72,6 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     setupModal();
     setupFilters();
+    setupFightFilters();
+    mountAnalysisExportBar();
 });
 
 function loadData() {
@@ -94,6 +100,7 @@ function saveData() {
     tournamentState = {
         ...tournamentState,
         fights: athletesData,
+        analyticsCache: null,
     };
     const persisted = DataStoreModule.saveTournamentState(tournamentState);
     hydrateFromTournamentState(persisted);
@@ -125,11 +132,17 @@ function populateAthletes() {
     athletesGrid.innerHTML = '';
     
     const filteredAthletes = getFilteredAthletes();
-    
-    filteredAthletes.forEach((athlete, index) => {
-        const athleteCard = createAthleteCard(athlete, index);
-        athletesGrid.appendChild(athleteCard);
-    });
+    if (!filteredAthletes.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'text-align:center;color:#666;padding:1rem;';
+        empty.textContent = 'Nenhum atleta corresponde aos filtros.';
+        athletesGrid.appendChild(empty);
+        mountAthleteExportBar(filteredAthletes);
+        return;
+    }
+    const frag = AthleteTemplates.renderAthleteCards(filteredAthletes);
+    athletesGrid.appendChild(frag);
+    mountAthleteExportBar(filteredAthletes);
 }
 
 // Create athlete card
@@ -175,22 +188,32 @@ function getResultClass(result) {
 
 // Populate results table
 function populateResults() {
+    const view = (document.getElementById('fight-view')?.value || 'table');
     const tbody = document.querySelector('#results-table tbody');
-    tbody.innerHTML = '';
-    
-    athletesData.forEach((athlete, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${athlete.athlete_name}</td>
-            <td>${athlete.category}</td>
-            <td>${athlete.weight_class}</td>
-            <td>${athlete.opponent_name}</td>
-            <td>${athlete.stage}</td>
-            <td><span class="result-badge ${getResultClass(athlete.fight_result)}">${athlete.fight_result}</span></td>
-            <td><button class="edit-btn" onclick="openEditModal(${index})">Editar</button></td>
-        `;
-        tbody.appendChild(row);
-    });
+    const grid = document.getElementById('fights-grid');
+    if (tbody) tbody.innerHTML = '';
+    if (grid) grid.innerHTML = '';
+    const data = getFilteredFights();
+    const tableWrap = document.querySelector('.results-table-container');
+    if (view === 'cards') {
+        if (tableWrap) tableWrap.style.display = 'none';
+        if (grid) grid.appendChild(FightTemplates.renderFightCards(data));
+    } else {
+        if (tableWrap) tableWrap.style.display = '';
+        data.forEach((athlete, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${athlete.athlete_name}</td>
+                <td>${athlete.category}</td>
+                <td>${athlete.weight_class}</td>
+                <td>${athlete.opponent_name}</td>
+                <td>${athlete.stage}</td>
+                <td><span class="result-badge ${getResultClass(athlete.fight_result)}">${athlete.fight_result}</span></td>
+                <td><button class="edit-btn" onclick="openEditModal(${index})">Editar</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 }
 
 // Filter setup
@@ -200,6 +223,28 @@ function setupFilters() {
     
     categoryFilter.addEventListener('change', populateAthletes);
     resultFilter.addEventListener('change', populateAthletes);
+}
+
+function setupFightFilters() {
+    const s = document.getElementById('fight-search');
+    const c = document.getElementById('fight-category-filter');
+    const p = document.getElementById('fight-phase-filter');
+    const v = document.getElementById('fight-view');
+    const add = document.getElementById('add-fight');
+    if (s) s.addEventListener('input', populateResults);
+    if (c) c.addEventListener('change', populateResults);
+    if (p) p.addEventListener('change', populateResults);
+    if (v) v.addEventListener('change', populateResults);
+    if (add) add.addEventListener('click', () => {
+        if (typeof window.openAddFightModal === 'function') {
+            window.openAddFightModal();
+        } else if (typeof window.openAddAthleteModal === 'function') {
+            window.openAddAthleteModal();
+        } else {
+            const modal = document.getElementById('edit-modal');
+            if (modal) modal.style.display = 'block';
+        }
+    });
 }
 
 // Get filtered athletes
@@ -214,6 +259,21 @@ function getFilteredAthletes() {
     });
 }
 
+function getFilteredFights() {
+    const t = (document.getElementById('fight-search')?.value || '').toLowerCase();
+    const c = document.getElementById('fight-category-filter')?.value || '';
+    const p = document.getElementById('fight-phase-filter')?.value || '';
+    return (athletesData || []).filter((f) => {
+        const matchText = !t ||
+            (f.athlete_name || '').toLowerCase().includes(t) ||
+            (f.opponent_name || '').toLowerCase().includes(t) ||
+            (f.coach || '').toLowerCase().includes(t);
+        const matchCat = !c || f.category === c;
+        const matchPhase = !p || f.stage === p;
+        return matchText && matchCat && matchPhase;
+    });
+}
+
 let chartsInitialized = false;
 
 function createCharts() {
@@ -223,6 +283,58 @@ function createCharts() {
     } else {
         ChartsModule.refreshCharts(tournamentState);
     }
+}
+
+function mountAnalysisExportBar() {
+    const wrap = document.getElementById('analysis-export-bar');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'export-buttons';
+    const b1 = document.createElement('button');
+    b1.className = 'export-btn';
+    b1.textContent = 'Exportar JSON';
+    b1.addEventListener('click', () => {
+        const bundle = DataStoreModule.withAnalytics(tournamentState).analyticsCache;
+        ExportsModule.exportAnalytics(bundle, 'json');
+    });
+    const b2 = document.createElement('button');
+    b2.className = 'export-btn';
+    b2.textContent = 'Exportar CSV';
+    b2.addEventListener('click', () => {
+        const bundle = DataStoreModule.withAnalytics(tournamentState).analyticsCache;
+        ExportsModule.exportAnalytics(bundle, 'csv');
+    });
+    row.appendChild(b1);
+    row.appendChild(b2);
+    wrap.appendChild(row);
+}
+
+function getFilteredRoster() {
+    const list = getFilteredAthletes();
+    return AthleteTemplates.toAthleteRoster(list);
+}
+
+function mountAthleteExportBar(currentList) {
+    const section = document.getElementById('athletes');
+    if (!section) return;
+    let container = document.getElementById('athletes-export-bar');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'athletes-export-bar';
+        const grid = document.getElementById('athletes-grid');
+        if (grid && grid.parentNode) {
+            grid.parentNode.insertBefore(container, grid.nextSibling);
+        } else {
+            section.appendChild(container);
+        }
+    }
+    container.innerHTML = '';
+    const build = AthleteTemplates.buildExportBar(
+        () => ExportsModule.exportAthletes(AthleteTemplates.toAthleteRoster(currentList), 'csv'),
+        () => ExportsModule.exportAthletes(AthleteTemplates.toAthleteRoster(currentList), 'json')
+    );
+    container.appendChild(build);
 }
 
 // Modal setup
@@ -303,6 +415,14 @@ function addRoundToModal(round, index) {
         <input type="number" placeholder="Nossa pontuação" value="${round.score_our_athlete || ''}" data-field="score_our_athlete" data-index="${index}">
         <input type="number" placeholder="Pontuação oponente" value="${round.score_opponent || ''}" data-field="score_opponent" data-index="${index}">
         <button type="button" class="remove-round" onclick="removeRound(${index})">Remover</button>
+        <div class="penalty-controls" style="display:flex;align-items:center;gap:8px;">
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" data-field="has_penalty"> Penalidade?</label>
+            <select data-field="penalty_assessed">
+                <option value="ATHLETE">Contra Atleta</option>
+                <option value="OPPONENT">Contra Oponente</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" data-field="penalty_accepted" checked> Aceita</label>
+        </div>
     `;
     container.appendChild(roundDiv);
 }
@@ -350,10 +470,19 @@ function updateRoundIndices() {
 // Save edit
 function saveEdit(event) {
     event.preventDefault();
-    
-    if (currentEditingIndex === -1) return;
-    
-    const athlete = athletesData[currentEditingIndex];
+    const creating = currentEditingIndex === -1;
+    const penaltySummary = [];
+    let athlete = creating ? {
+        category: document.getElementById('athlete-category')?.value || '',
+        weight_class: document.getElementById('athlete-weight')?.value || '',
+        athlete_name: document.getElementById('athlete-name')?.value || '',
+        opponent_name: '',
+        opponent_team: '',
+        stage: 'A Definir',
+        rounds: [],
+        coach: '',
+        fight_result: 'A Definir'
+    } : athletesData[currentEditingIndex];
     
     // Update basic info
     athlete.opponent_name = document.getElementById('opponent-name').value;
@@ -387,9 +516,21 @@ function saveEdit(event) {
                 round.round_outcome = 'EMPATE';
             }
         }
+
+        const hasPenalty = item.querySelector('[data-field="has_penalty"]')?.checked;
+        if (hasPenalty) {
+            const assessed = item.querySelector('[data-field="penalty_assessed"]')?.value || 'ATHLETE';
+            const accepted = item.querySelector('[data-field="penalty_accepted"]')?.checked !== false;
+            round.penalties = [{ assessedAgainst: assessed, accepted }];
+            penaltySummary.push({ assessedAgainst: assessed, accepted });
+        }
         
         athlete.rounds.push(round);
     });
+
+    if (penaltySummary.length) {
+        athlete.penaltySummary = penaltySummary;
+    }
     
     // Determine fight result
     const wins = athlete.rounds.filter(r => r.round_outcome === 'VITÓRIA').length;
@@ -405,6 +546,12 @@ function saveEdit(event) {
         athlete.fight_result = 'A Definir'; // Tie case
     }
     
+    if (creating) {
+        athletesData.push(athlete);
+        currentEditingIndex = athletesData.length - 1;
+        window.currentEditingIndex = currentEditingIndex;
+    }
+
     // Persist latest data snapshot
     saveData();
     
@@ -431,6 +578,10 @@ Object.assign(window, {
     setupFilters,
     getFilteredAthletes,
     createCharts,
+    getFilteredFights,
+    mountAnalysisExportBar,
+    getFilteredRoster,
+    mountAthleteExportBar,
     setActiveTab: TabsModule.setActiveTab,
     getActiveTabId: TabsModule.getActiveTabId,
     setupModal,

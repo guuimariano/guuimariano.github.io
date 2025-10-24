@@ -288,6 +288,59 @@ function renderAveragePoints(state) {
     });
 }
 
+function renderPenaltiesByCoach(state) {
+    const series = computePenaltiesByCoach(state)
+        .filter(item => (item.accepted + item.overturned) > 0)
+        .slice(0, 12);
+    if (!series.length) {
+        destroyChart('penaltiesByCoachChart');
+        return;
+    }
+    const labels = series.map(i => i.coach || '—');
+    const accepted = series.map(i => i.accepted || 0);
+    const overturned = series.map(i => i.overturned || 0);
+    instantiateChart('penaltiesByCoachChart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Aceitas', data: accepted, backgroundColor: COLORS.danger, borderColor: COLORS.danger, borderWidth: 1.5 },
+                { label: 'Revertidas', data: overturned, backgroundColor: COLORS.secondary, borderColor: COLORS.secondary, borderWidth: 1.5 },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: COLORS.surface } } },
+            plugins: { legend: { position: 'top' } },
+        },
+    });
+}
+
+function renderPenaltiesByAthlete(state) {
+    const series = computePenaltiesByAthlete(state)
+        .filter(item => (item.penalties) > 0)
+        .slice(0, 12);
+    if (!series.length) {
+        destroyChart('penaltiesByAthleteChart');
+        return;
+    }
+    const labels = series.map(i => i.athlete || '—');
+    const penalties = series.map(i => i.penalties || 0);
+    instantiateChart('penaltiesByAthleteChart', {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Penalidades', data: penalties, backgroundColor: COLORS.primary, borderColor: COLORS.primary, borderWidth: 1.5 }] },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true, grid: { color: COLORS.surface } }, y: { grid: { display: false } } },
+            plugins: { legend: { display: false } },
+        },
+    });
+}
+
 function destroyIndividualCharts() {
     while (individualCharts.length) {
         const chart = individualCharts.pop();
@@ -365,6 +418,8 @@ function renderAllCharts(state) {
     renderWinsByPhase(state);
     renderPerformanceByAthlete(state);
     renderAveragePoints(state);
+    renderPenaltiesByCoach(state);
+    renderPenaltiesByAthlete(state);
     renderIndividualFightCharts(state);
 }
 
