@@ -562,3 +562,54 @@ document.addEventListener('DOMContentLoaded', function() {
         setupAutoSave();
     }, 100);
 });
+
+(function(){
+const r=new Map();
+function registerModal(id,cfg={}){r.set(id,cfg);return true}
+function open(id){
+  const cfg=r.get(id);
+  const modal=document.getElementById(id);
+  if(!modal)return false;
+  modal.style.display='block';
+  if(cfg&&typeof cfg.onOpen==='function'){try{cfg.onOpen(modal)}catch(e){}}
+  const form=modal.querySelector('form');
+  if(form&&!form.__bound){
+    form.addEventListener('submit',(e)=>{
+      e.preventDefault();
+      if(cfg&&typeof cfg.validate==='function'){
+        const ok=cfg.validate(modal);
+        if(ok===false)return;
+      }
+      if(cfg&&typeof cfg.submit==='function'){
+        cfg.submit(modal);
+      }else if(typeof window.saveEdit==='function'){
+        window.saveEdit(e);
+      }
+      close(id);
+    });
+    form.__bound=true;
+  }
+  return true;
+}
+function close(id){
+  const modal=document.getElementById(id);
+  if(!modal)return false;
+  modal.style.display='none';
+  const cfg=r.get(id);
+  if(cfg&&typeof cfg.onClose==='function'){try{cfg.onClose(modal)}catch(e){}}
+  return true;
+}
+function createRepeater(container,addSelector){
+  const root=typeof container==='string'?document.querySelector(container):container;
+  const addBtn=typeof addSelector==='string'?document.querySelector(addSelector):addSelector;
+  if(!root)return{add(){},remove(){},count(){return 0},setTemplate(){return this}};
+  const add=(el)=>{root.appendChild(el);return el};
+  const remove=(idx)=>{const nodes=root.querySelectorAll(':scope > *');if(nodes[idx])nodes[idx].remove()};
+  const count=()=>root.querySelectorAll(':scope > *').length;
+  if(addBtn){addBtn.addEventListener('click',()=>{const t=root.__template;if(typeof t==='function'){add(t(count()))}})}
+  return{add,remove,count,setTemplate(fn){root.__template=fn;return this}};
+}
+window.modalRegistry={register:registerModal,open,close,get(id){return r.get(id)},dump(){return Array.from(r.keys())}};
+window.modalDebug={dump(){const list=Array.from(r.keys());try{console.log('Registered modals:',list)}catch(_e){}return list}};
+window.createFieldRepeater=createRepeater;
+})();

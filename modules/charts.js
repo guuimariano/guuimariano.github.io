@@ -3,6 +3,8 @@ import {
     computeWinsByPhase,
     computePerformanceByAthlete,
     computeAveragePointsPerRound,
+    computePenaltiesByCoach,
+    computePenaltiesByAthlete,
 } from './data-store.js';
 
 const chartRegistry = new Map();

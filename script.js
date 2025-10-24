@@ -61,7 +61,15 @@ window.currentEditingIndex = currentEditingIndex;
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     loadData();
-    setupNavigation();
+    TabsModule.initTabs({
+        defaultTab: 'dashboard',
+        storageKey: 'spa:last-active-tab',
+        onChange: () => {
+            if (chartsInitialized) {
+                createCharts();
+            }
+        },
+    });
     setupModal();
     setupFilters();
 });
@@ -102,31 +110,6 @@ function resetTournamentData() {
     return resetState;
 }
 // Navigation setup
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('.nav-link');
-    const sections = document.querySelectorAll('.section');
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Remove active class from all links and sections
-            navLinks.forEach(l => l.classList.remove('active'));
-            sections.forEach(s => s.classList.remove('active'));
-            
-            // Add active class to clicked link
-            this.classList.add('active');
-            
-            // Show corresponding section
-            const targetId = this.getAttribute('href').substring(1);
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-        });
-    });
-}
-
 // Update dashboard statistics
 function updateDashboard() {
     const totals = DataStoreModule.computeTotals(tournamentState);
@@ -440,7 +423,6 @@ Object.assign(window, {
     saveData,
     resetTournamentData,
     hydrateFromTournamentState,
-    setupNavigation,
     updateDashboard,
     populateAthletes,
     createAthleteCard,
@@ -449,6 +431,8 @@ Object.assign(window, {
     setupFilters,
     getFilteredAthletes,
     createCharts,
+    setActiveTab: TabsModule.setActiveTab,
+    getActiveTabId: TabsModule.getActiveTabId,
     setupModal,
     openEditModal,
     closeModal,

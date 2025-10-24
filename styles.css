@@ -12,6 +12,41 @@ body {
     background-color: #f5f5f5;
 }
 
+:root {
+    --color-primary: #6366F1;
+    --color-secondary: #8B5CF6;
+    --color-accent: #06B6D4;
+    --color-danger: #DF3F40;
+    --color-surface: #FFFFFF;
+    --color-bg: #f5f5f5;
+
+    --radius-sm: 6px;
+    --radius-md: 6px;
+    --radius-lg: 6px;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 5px 15px rgba(0,0,0,0.1);
+}
+.rounded-6 { border-radius: var(--radius-md); }
+.bg-primary { background-color: var(--color-primary); color: #fff; }
+.bg-secondary { background-color: var(--color-secondary); color: #fff; }
+.bg-accent { background-color: var(--color-accent); color: #0b1f26; }
+.bg-danger { background-color: var(--color-danger); color: #fff; }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.p-4 { padding: var(--space-4); }
+.px-4 { padding-left: var(--space-4); padding-right: var(--space-4); }
+.py-4 { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+.anim-fade-in { animation: fadeIn 0.3s ease-in; }
+.anim-slide-in { animation: slideIn 0.3s ease; }
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -20,7 +55,7 @@ body {
 
 /* Header Styles */
 .header {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
     color: white;
     padding: 2rem 0;
     text-align: center;
@@ -78,7 +113,7 @@ body {
 
 .nav-link:hover,
 .nav-link.active {
-    background-color: #2a5298;
+    background-color: var(--color-primary);
     color: white;
     transform: translateY(-2px);
 }
@@ -128,7 +163,7 @@ body {
 .stat-card {
     background: white;
     padding: 2rem;
-    border-radius: 15px;
+    border-radius: var(--radius-md);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     text-align: center;
     transition: transform 0.3s ease;
@@ -149,7 +184,7 @@ body {
 .stat-number {
     font-size: 3rem;
     font-weight: bold;
-    color: #1e3c72;
+    color: var(--color-primary);
 }
 
 .stat-number.victories {
@@ -175,7 +210,7 @@ body {
 .chart-container {
     background: white;
     padding: 2rem;
-    border-radius: 15px;
+    border-radius: var(--radius-md);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
@@ -285,7 +320,7 @@ body {
 /* Results Table */
 .results-table-container {
     background: white;
-    border-radius: 15px;
+    border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
@@ -296,7 +331,7 @@ body {
 }
 
 .results-table th {
-    background-color: #1e3c72;
+    background-color: var(--color-primary);
     color: white;
     padding: 1rem;
     text-align: left;
