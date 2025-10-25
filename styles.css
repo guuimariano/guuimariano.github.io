@@ -1034,6 +1034,34 @@ body {
     border-bottom: none;
 }
 
+/* Penalties list */
+#penalties-list ul { list-style: none; margin: 0; padding: 0; }
+#penalties-list li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: var(--space-4) var(--space-4);
+    border-bottom: 1px solid #E3E6EA;
+}
+#penalties-list li:last-child { border-bottom: none; }
+
+/* Action groups spacing */
+#coaches-list li > div:last-child,
+#locations-list li > div:last-child,
+#penalties-list li > div:last-child {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Fights: desktop table vs. mobile cards */
+#fights .results-table-container { display: none !important; }
+@media (min-width: 1280px) {
+    #fights .results-table-container { display: block !important; }
+    #fights #fights-grid { display: none; }
+}
+
 @media (min-width: 768px) {
     #locations-list li { 
         display: grid; 

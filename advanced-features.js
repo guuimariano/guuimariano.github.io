@@ -195,9 +195,57 @@ function deleteAthlete(index) {
 // Enhanced populate results with delete button
 function enhancedPopulateResults() {
     const tbody = document.querySelector('#results-table tbody');
-    tbody.innerHTML = '';
-    
-    athletesData.forEach((athlete, index) => {
+    const grid = document.getElementById('fights-grid');
+    const tableWrap = document.querySelector('#fights .results-table-container');
+    if (tbody) tbody.innerHTML = '';
+    if (grid) grid.innerHTML = '';
+
+    const select = document.getElementById('fight-view');
+    const selectView = (select && select.value) || 'table';
+    const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 1279px)').matches;
+    const useCards = isMobile || selectView === 'cards';
+
+    const data = (typeof window.getFilteredFights === 'function') ? window.getFilteredFights() : (Array.isArray(athletesData) ? athletesData : []);
+
+    if (useCards) {
+        if (tableWrap) {
+            try { tableWrap.style.setProperty('display','none','important'); } catch(_) { tableWrap.style.display = 'none'; }
+            tableWrap.hidden = true;
+        }
+        const FT = (window.__appModules && window.__appModules.fights) || null;
+        if (grid) {
+            if (FT && typeof FT.renderFightCards === 'function') {
+                grid.appendChild(FT.renderFightCards(data));
+            } else {
+                // Fallback simple cards
+                data.forEach((fight) => {
+                    const card = document.createElement('div');
+                    card.className = `athlete-card ${getResultClass(fight?.fight_result)}`;
+                    card.innerHTML = `
+                        <div class="athlete-name">${fight?.athlete_name || '—'}</div>
+                        <div class="athlete-info">
+                            <div><strong>Categoria:</strong> ${fight?.category || '—'}</div>
+                            <div><strong>Peso:</strong> ${fight?.weight_class || '—'}</div>
+                            <div><strong>Oponente:</strong> ${fight?.opponent_name || '—'}</div>
+                            <div><strong>Fase:</strong> ${fight?.stage || '—'}</div>
+                            <div><strong>Técnico:</strong> ${fight?.coach || '—'}</div>
+                            <div><strong>Equipe Oponente:</strong> ${fight?.opponent_team || '—'}</div>
+                        </div>
+                        <div class="fight-result ${getResultClass(fight?.fight_result)}">${fight?.fight_result || 'A Definir'}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+        return;
+    }
+
+    // Desktop table
+    if (tableWrap) {
+        try { tableWrap.style.setProperty('display','block','important'); } catch(_) { tableWrap.style.display = ''; }
+        tableWrap.hidden = false;
+    }
+    data.forEach((athlete, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${athlete.athlete_name}</td>

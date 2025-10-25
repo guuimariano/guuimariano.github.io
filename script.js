@@ -278,7 +278,13 @@ document.addEventListener('DOMContentLoaded', function() {
     TabsModule.initTabs({
         defaultTab: 'dashboard',
         storageKey: 'spa:last-active-tab',
-        onChange: () => {
+        onChange: (tabId) => {
+            if (tabId === 'fights') {
+                populateResults();
+            }
+            if (tabId === 'analysis') {
+                mountAnalysisExportBar();
+            }
             if (chartsInitialized) {
                 createCharts();
             }
@@ -433,18 +439,20 @@ function getResultClass(result) {
 
 // Populate results table
 function populateResults() {
-    const view = (document.getElementById('fight-view')?.value || 'table');
+    const selectView = (document.getElementById('fight-view')?.value || 'table');
     const tbody = document.querySelector('#results-table tbody');
     const grid = document.getElementById('fights-grid');
     if (tbody) tbody.innerHTML = '';
     if (grid) grid.innerHTML = '';
     const data = getFilteredFights();
-    const tableWrap = document.querySelector('.results-table-container');
-    if (view === 'cards') {
-        if (tableWrap) tableWrap.style.display = 'none';
+    const tableWrap = document.querySelector('#fights .results-table-container');
+    const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 1279px)').matches;
+    const useCards = isMobile || selectView === 'cards';
+    if (useCards) {
+        if (tableWrap) { try { tableWrap.style.setProperty('display','none','important'); } catch(_) { tableWrap.style.display = 'none'; } }
         if (grid) grid.appendChild(FightTemplates.renderFightCards(data));
     } else {
-        if (tableWrap) tableWrap.style.display = '';
+        if (tableWrap) { try { tableWrap.style.setProperty('display','block','important'); } catch(_) { tableWrap.style.display = ''; } }
         data.forEach((athlete, index) => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -489,6 +497,12 @@ function setupFightFilters() {
             const modal = document.getElementById('edit-modal');
             if (modal) modal.style.display = 'block';
         }
+    });
+    // Recalculate view on viewport changes for responsive table/cards toggle
+    window.addEventListener('resize', () => {
+        // Only update if fights tab is active to avoid needless work
+        const fightsTabSelected = document.getElementById('fights')?.classList.contains('active') || location.hash === '#fights';
+        if (fightsTabSelected) populateResults();
     });
 }
 
