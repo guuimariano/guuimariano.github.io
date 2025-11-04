@@ -1,275 +1,522 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brazil Open - Liga Vale</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brasil Open – PR | Liga Vale</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="./advanced-features.js" defer></script>
+  <script src="./script.js" defer></script>
 </head>
 <body>
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-container">
-                    <img src="liga-vale-logo.jpg" alt="Liga Vale Logo" class="team-logo">
-                </div>
-                <h1 class="title">Brazil Open - PR</h1>
-                <h2 class="subtitle">Liga Vale</h2>
-                <p class="description">Campeonato de Taekwondo - Infantil e Juvenil</p>
+  <header class="hero" role="banner">
+    <img src="./liga-vale-logo.jpg" alt="Liga Vale" class="crest" width="72" height="72">
+    <h1 class="title">Brasil Open – PR</h1>
+    <p class="subtitle">Liga Vale</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Seções da aplicação">
+    <button role="tab" aria-selected="true" aria-controls="panel-dashboard" id="tab-dashboard" data-target="panel-dashboard" class="tab is-active">Dashboard</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-athletes" id="tab-athletes" data-target="panel-athletes" class="tab">Atletas</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-coaches" id="tab-coaches" data-target="panel-coaches" class="tab">Técnicos</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-fights" id="tab-fights" data-target="panel-fights" class="tab">Lutas</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-analysis" id="tab-analysis" data-target="panel-analysis" class="tab">Análises</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-locations" id="tab-locations" data-target="panel-locations" class="tab">Locais de Treino</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-penalties" id="tab-penalties" data-target="panel-penalties" class="tab">Penalidades</button>
+  </nav>
+
+  <main class="content">
+    <section id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" class="panel">
+      <h2 class="section-title">Dashboard</h2>
+      <div class="controls" role="group" aria-label="Dados">
+        <button id="btn-import-all" class="secondary" type="button">Importar JSON</button>
+        <button id="btn-export-all" class="secondary" type="button">Exportar Tudo</button>
+        <input id="input-import-all" type="file" accept="application/json" class="sr-only" aria-hidden="true">
+      </div>
+      <div class="kpis">
+        <div class="kpi kpi-total"><span class="kpi-label">Total de Atletas</span><span id="kpi-total-athletes" class="kpi-value">0</span></div>
+        <div class="kpi kpi-wins"><span class="kpi-label">Vitórias</span><span id="kpi-wins" class="kpi-value">0</span></div>
+        <div class="kpi kpi-losses"><span class="kpi-label">Derrotas</span><span id="kpi-losses" class="kpi-value">0</span></div>
+        <div class="kpi kpi-pending"><span class="kpi-label">Pendentes</span><span id="kpi-pending" class="kpi-value">0</span></div>
+      </div>
+      <div class="charts charts-dashboard">
+        <div class="card">
+          <h3 class="card-title">Vitórias vs Derrotas por Categoria</h3>
+          <canvas id="chart-category" height="220"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Vitórias vs Derrotas por Fase</h3>
+          <canvas id="chart-phase" height="220"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-athletes" role="tabpanel" aria-labelledby="tab-athletes" class="panel is-hidden">
+      <h2 class="section-title">Atletas</h2>
+      <div class="controls">
+        <input id="athlete-search" type="search" placeholder="Buscar atleta" aria-label="Buscar atleta">
+        <select id="athlete-filter-category" aria-label="Filtrar por categoria">
+          <option value="">Todas as Categorias</option>
+        </select>
+        <select id="athlete-filter-graduation" aria-label="Filtrar por graduação">
+          <option value="">Todas as Graduações</option>
+        </select>
+        <div class="spacer"></div>
+        <button id="btn-export-athletes-csv" class="secondary" type="button">Exportar CSV</button>
+        <button id="btn-export-athletes-json" class="secondary" type="button">Exportar JSON</button>
+        <button id="btn-new-athlete" class="primary" type="button">+ Novo Atleta</button>
+      </div>
+      <div class="table-wrap">
+        <table class="table" aria-label="Lista de atletas">
+          <caption class="sr-only">Lista de atletas</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col">Categoria</th>
+              <th scope="col">Graduação</th>
+              <th scope="col">V / D — L</th>
+              <th scope="col" class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="athletes-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="athletes-prev" class="secondary" type="button" aria-label="Página anterior">Anterior</button>
+        <span id="athletes-page" aria-live="polite">1</span>
+        <button id="athletes-next" class="secondary" type="button" aria-label="Próxima página">Próxima</button>
+      </div>
+    </section>
+
+    <section id="panel-coaches" role="tabpanel" aria-labelledby="tab-coaches" class="panel is-hidden">
+      <h2 class="section-title">Técnicos</h2>
+      <div class="controls">
+        <input id="coach-search" type="search" placeholder="Buscar técnico" aria-label="Buscar técnico">
+        <div class="spacer"></div>
+        <button id="btn-export-coaches-csv" class="secondary" type="button">Exportar CSV</button>
+        <button id="btn-export-coaches-json" class="secondary" type="button">Exportar JSON</button>
+        <button id="btn-new-coach" class="primary" type="button">+ Novo Técnico</button>
+      </div>
+      <div class="table-wrap">
+        <table class="table" aria-label="Lista de técnicos">
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col" class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="coaches-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="coaches-prev" class="secondary" type="button" aria-label="Página anterior">Anterior</button>
+        <span id="coaches-page" aria-live="polite">1</span>
+        <button id="coaches-next" class="secondary" type="button" aria-label="Próxima página">Próxima</button>
+      </div>
+    </section>
+
+    <section id="panel-fights" role="tabpanel" aria-labelledby="tab-fights" class="panel is-hidden">
+      <h2 class="section-title">Lutas</h2>
+      <div class="controls">
+        <input id="fight-search" type="search" placeholder="Buscar atleta ou fase" aria-label="Buscar atleta ou fase">
+        <select id="fight-filter-athlete" aria-label="Filtrar por atleta">
+          <option value="">Todos os Atletas</option>
+        </select>
+        <select id="fight-filter-category" aria-label="Filtrar por categoria">
+          <option value="">Todas as Categorias</option>
+        </select>
+        <select id="fight-filter-phase" aria-label="Filtrar por fase">
+          <option value="">Todas as Fases</option>
+          <option>Classificatória</option>
+          <option>Quartas</option>
+          <option>Semifinal</option>
+          <option>Final</option>
+        </select>
+        <input id="fight-filter-date" type="date" aria-label="Filtrar por data">
+        <div class="spacer"></div>
+        <div class="segmented" role="group" aria-label="Visualização de Lutas">
+          <button id="fight-view-table" class="seg-btn is-active" type="button" aria-pressed="true">Tabela</button>
+          <button id="fight-view-cards" class="seg-btn" type="button" aria-pressed="false">Cards</button>
+        </div>
+        <button id="btn-export-fights-csv" class="secondary" type="button">Exportar CSV</button>
+        <button id="btn-export-fights-json" class="secondary" type="button">Exportar JSON</button>
+        <button id="btn-new-fight" class="primary" type="button">+ Adicionar Luta</button>
+      </div>
+
+      <div id="fights-table-wrap" class="table-wrap">
+        <table class="table" aria-label="Lista de lutas">
+          <caption class="sr-only">Lista de lutas</caption>
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Atleta</th>
+              <th scope="col">Técnico</th>
+              <th scope="col">Oponente</th>
+              <th scope="col">Categoria</th>
+              <th scope="col">Fase</th>
+              <th scope="col">Resultado</th>
+              <th scope="col" class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="fights-tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="fights-cards" class="cards-grid is-hidden" aria-label="Cards de lutas"></div>
+
+      <div class="pagination">
+        <button id="fights-prev" class="secondary" type="button" aria-label="Página anterior">Anterior</button>
+        <span id="fights-page" aria-live="polite">1</span>
+        <button id="fights-next" class="secondary" type="button" aria-label="Próxima página">Próxima</button>
+      </div>
+    </section>
+
+    <section id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" class="panel is-hidden">
+      <h2 class="section-title">Análises</h2>
+      <div class="controls" role="group" aria-label="Filtros de análise">
+        <select id="analysis-filter-athlete" aria-label="Filtrar por atleta">
+          <option value="">Todos os Atletas</option>
+        </select>
+        <select id="analysis-filter-category" aria-label="Filtrar por categoria">
+          <option value="">Todas as Categorias</option>
+        </select>
+        <select id="analysis-filter-graduation" aria-label="Filtrar por graduação">
+          <option value="">Todas as Graduações</option>
+        </select>
+        <select id="analysis-filter-coach" aria-label="Filtrar por técnico">
+          <option value="">Todos os Técnicos</option>
+        </select>
+        <input id="analysis-filter-from" type="date" aria-label="De">
+        <input id="analysis-filter-to" type="date" aria-label="Até">
+        <div class="spacer"></div>
+        <button id="analysis-clear" class="secondary" type="button">Limpar</button>
+      </div>
+
+      <div id="analysis-general-charts" class="charts charts-analysis" aria-label="Gráficos gerais">
+        <div class="card">
+          <h3 class="card-title">Vitórias x Derrotas (Geral)</h3>
+          <canvas id="analysis-winloss-total" height="220"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Aproveitamento por Fase</h3>
+          <canvas id="analysis-phase-adv" height="220"></canvas>
+        </div>
+      </div>
+
+      <div id="analysis-athlete-charts" class="charts charts-analysis is-hidden" aria-label="Gráficos específicos do atleta">
+        <div class="card">
+          <h3 class="card-title">Aproveitamento do Atleta</h3>
+          <canvas id="analysis-athlete-winloss" height="220"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Pontos Médios por Round</h3>
+          <canvas id="analysis-athlete-avg-round" height="220"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Evolução de Pontos por Round</h3>
+          <canvas id="analysis-athlete-trend-round" height="220"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Faltas do Atleta por Luta</h3>
+          <canvas id="analysis-athlete-faults" height="220"></canvas>
+        </div>
+      </div>
+
+      <div id="analysis-coach-charts" class="charts charts-analysis is-hidden" aria-label="Gráficos específicos do técnico">
+        <div class="card">
+          <h3 class="card-title">Faltas do Adversário por Round (Acatadas x Rejeitadas)</h3>
+          <canvas id="analysis-coach-opponent-faults" height="220"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-locations" role="tabpanel" aria-labelledby="tab-locations" class="panel is-hidden">
+      <h2 class="section-title">Locais de Treino</h2>
+      <div class="controls">
+        <input id="location-search" type="search" placeholder="Buscar local" aria-label="Buscar local">
+        <div class="spacer"></div>
+        <button id="btn-export-locations-csv" class="secondary" type="button">Exportar CSV</button>
+        <button id="btn-export-locations-json" class="secondary" type="button">Exportar JSON</button>
+        <button id="btn-new-location" class="primary" type="button">+ Novo Local</button>
+      </div>
+      <div class="table-wrap">
+        <table class="table" aria-label="Lista de locais de treino">
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col">Responsável</th>
+              <th scope="col" class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="locations-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="locations-prev" class="secondary" type="button" aria-label="Página anterior">Anterior</button>
+        <span id="locations-page" aria-live="polite">1</span>
+        <button id="locations-next" class="secondary" type="button" aria-label="Próxima página">Próxima</button>
+      </div>
+    </section>
+
+    <section id="panel-penalties" role="tabpanel" aria-labelledby="tab-penalties" class="panel is-hidden">
+      <h2 class="section-title">Penalidades</h2>
+      <div class="controls">
+        <input id="penalty-search" type="search" placeholder="Buscar penalidade" aria-label="Buscar penalidade">
+        <div class="spacer"></div>
+        <button id="btn-export-penalties-csv" class="secondary" type="button">Exportar CSV</button>
+        <button id="btn-export-penalties-json" class="secondary" type="button">Exportar JSON</button>
+        <button id="btn-new-penalty" class="primary" type="button">+ Nova Penalidade</button>
+      </div>
+      <div class="table-wrap">
+        <table class="table" aria-label="Lista de penalidades">
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col" class="col-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="penalties-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="penalties-prev" class="secondary" type="button" aria-label="Página anterior">Anterior</button>
+        <span id="penalties-page" aria-live="polite">1</span>
+        <button id="penalties-next" class="secondary" type="button" aria-label="Próxima página">Próxima</button>
+      </div>
+    </section>
+    <div id="modal-athlete" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="athlete-modal-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="athlete-modal-title">Atleta</h3>
+          <button type="button" id="athlete-close" class="icon-btn" aria-label="Fechar">×</button>
+        </div>
+        <form id="athlete-form" class="modal-form">
+          <div class="modal-body">
+            <input type="hidden" id="athlete-id">
+            <label>
+              <span>Nome</span>
+              <input id="athlete-name" type="text" required>
+            </label>
+            <label>
+              <span>Categoria</span>
+              <select id="athlete-category" required>
+                <option value="">Selecione...</option>
+                <option value="mirim">Mirim</option>
+                <option value="infantil">Infantil</option>
+                <option value="cadete">Cadete</option>
+                <option value="juvenil">Juvenil</option>
+                <option value="sub-21">Sub-21</option>
+                <option value="adulto">Adulto</option>
+                <option value="master">Master</option>
+              </select>
+            </label>
+            <label>
+              <span>Graduação</span>
+              <input id="athlete-graduation" type="text" required>
+            </label>
+            <label>
+              <span>Locais de Treino</span>
+              <div id="athlete-locations-list" class="loc-list"></div>
+              <button type="button" id="btn-add-athlete-location" class="secondary">+ Adicionar Local</button>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="athlete-cancel" class="secondary">Cancelar</button>
+            <button type="submit" id="athlete-save" class="primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="modal-fight" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="fight-modal-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="fight-modal-title">Luta</h3>
+          <button type="button" id="fight-close" class="icon-btn" aria-label="Fechar">×</button>
+        </div>
+        <form id="fight-form" class="modal-form">
+          <div class="modal-body">
+            <input type="hidden" id="fight-id">
+            <label>
+              <span>Data</span>
+              <input id="fight-date" type="date" required>
+            </label>
+            <label>
+              <span>Atleta</span>
+              <select id="fight-athlete" required></select>
+            </label>
+            <label>
+              <span>Técnico</span>
+              <select id="fight-coach"></select>
+            </label>
+            <label>
+              <span>Oponente</span>
+              <input id="fight-opponent" type="text">
+            </label>
+            <label>
+              <span>Categoria</span>
+              <select id="fight-category" required>
+                <option value="">Selecione...</option>
+                <option value="mirim">Mirim</option>
+                <option value="infantil">Infantil</option>
+                <option value="cadete">Cadete</option>
+                <option value="juvenil">Juvenil</option>
+                <option value="sub-21">Sub-21</option>
+                <option value="adulto">Adulto</option>
+                <option value="master">Master</option>
+              </select>
+            </label>
+            <label>
+              <span>Fase</span>
+              <select id="fight-phase" required>
+                <option>Classificatória</option>
+                <option>Quartas</option>
+                <option>Semifinal</option>
+                <option>Final</option>
+              </select>
+            </label>
+            <label>
+              <span>Resultado</span>
+              <select id="fight-result" required>
+                <option value="Vitória">Vitória</option>
+                <option value="Derrota">Derrota</option>
+              </select>
+            </label>
+            <label class="checkbox-label">
+              <input id="fight-wo" type="checkbox">
+              <span>Resultado por W.O. (walkover)</span>
+            </label>
+            <div>
+              <span>Rounds</span>
+              <div class="rounds-head"><span class="col-index">#</span><span>Pontos</span><span>Pontos Adversário</span><span class="sr-only">Ação</span></div>
+              <div id="rounds-list" class="rounds-list"></div>
+              <button type="button" id="btn-add-round" class="secondary">+ Adicionar Round</button>
             </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="fight-cancel" class="secondary">Cancelar</button>
+            <button type="submit" id="fight-save" class="primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div id="modal-location" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="location-modal-title">Local de Treino</h3>
+          <button type="button" id="location-close" class="icon-btn" aria-label="Fechar">×</button>
         </div>
-    </header>
-
-    <nav class="nav">
-        <div class="container">
-            <ul class="nav-list">
-                <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
-                <li><a href="#athletes" class="nav-link">Atletas</a></li>
-                <li><a href="#coaches" class="nav-link">Técnicos</a></li>
-                <li><a href="#fights" class="nav-link">Lutas</a></li>
-                <li><a href="#analysis" class="nav-link">Análise</a></li>
-                <li><a href="#training-locations" class="nav-link">Locais de Treino</a></li>
-                <li><a href="#penalties" class="nav-link">Penalidades</a></li>
-            </ul>
+        <form id="location-form" class="modal-form">
+          <div class="modal-body">
+            <input type="hidden" id="location-id">
+            <label>
+              <span>Nome</span>
+              <input id="location-name" type="text" required>
+            </label>
+            <label>
+              <span>Responsável</span>
+              <input id="location-responsible" type="text">
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="location-cancel" class="secondary">Cancelar</button>
+            <button type="submit" id="location-save" class="primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="modal-coach" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="coach-modal-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="coach-modal-title">Técnico</h3>
+          <button type="button" id="coach-close" class="icon-btn" aria-label="Fechar">×</button>
         </div>
-    </nav>
-
-    <main class="main">
-        <div class="container">
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="section active">
-                <h2 class="section-title">Dashboard Geral</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total de Atletas</h3>
-                        <span class="stat-number" id="total-athletes">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Vitórias</h3>
-                        <span class="stat-number victories" id="total-victories">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Derrotas</h3>
-                        <span class="stat-number defeats" id="total-defeats">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>A Definir</h3>
-                        <span class="stat-number pending" id="total-pending">0</span>
-                    </div>
-                </div>
-
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h3>Aproveitamento por Categoria</h3>
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>Resultados por Fase</h3>
-                        <canvas id="stageChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Coaches Section -->
-            <section id="coaches" class="section">
-                <h2 class="section-title">Técnicos</h2>
-                <div class="filter-controls">
-                    <button id="add-coach" class="edit-btn" aria-label="Adicionar Técnico" title="Adicionar Técnico">+ Add Coach</button>
-                </div>
-                <div class="p-4 rounded-6 shadow-sm" id="coaches-list" style="background:#fff;"></div>
-            </section>
-
-            <!-- Training Locations Section -->
-            <section id="training-locations" class="section">
-                <h2 class="section-title">Locais de Treino</h2>
-                <div class="filter-controls">
-                    <button id="add-location" class="edit-btn" aria-label="Adicionar Local de Treino" title="Adicionar Local de Treino">+ Add Location</button>
-                </div>
-                <div class="p-4 rounded-6 shadow-sm" id="locations-list" style="background:#fff;"></div>
-            </section>
-
-            <!-- Penalties Section -->
-            <section id="penalties" class="section">
-                <h2 class="section-title">Penalidades</h2>
-                <div class="filter-controls">
-                    <button id="add-penalty" class="edit-btn" aria-label="Adicionar Penalidade" title="Adicionar Penalidade">+ Add Penalty</button>
-                </div>
-                <div class="p-4 rounded-6 shadow-sm" id="penalties-list" style="background:#fff;"></div>
-            </section>
-
-            <!-- Athletes Section -->
-            <section id="athletes" class="section">
-                <h2 class="section-title">Atletas da Liga Vale</h2>
-                
-                <div class="filter-controls">
-                    <select id="category-filter">
-                        <option value="">Todas as Categorias</option>
-                        <option value="INFANTIL">Infantil</option>
-                        <option value="JUVENIL">Juvenil</option>
-                    </select>
-                    <select id="result-filter">
-                        <option value="">Todos os Resultados</option>
-                        <option value="VITÓRIA">Vitórias</option>
-                        <option value="DERROTA">Derrotas</option>
-                        <option value="A Definir">A Definir</option>
-                    </select>
-                </div>
-
-                <div class="results-table-container" id="athletes-table-container">
-                    <table class="results-table" id="athletes-table">
-                        <thead>
-                            <tr>
-                                <th>Atleta</th>
-                                <th>Categoria</th>
-                                <th>Peso</th>
-                                <th>Oponente</th>
-                                <th>Fase</th>
-                                <th>Técnico</th>
-                                <th>Resultado</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="athletes-grid" id="athletes-grid">
-                    <!-- Athletes cards will be populated by JavaScript -->
-                </div>
-            </section>
-
-            <!-- Fights Section -->
-            <section id="fights" class="section">
-                <h2 class="section-title">Lutas</h2>
-                <div class="filter-controls">
-                    <input type="text" id="fight-search" placeholder="Buscar atleta/oponente/técnico..." style="padding:0.75rem 1rem;border:2px solid #ddd;border-radius:25px;font-size:1rem;min-width:250px;">
-                    <select id="fight-category-filter">
-                        <option value="">Todas as Categorias</option>
-                        <option value="INFANTIL">Infantil</option>
-                        <option value="JUVENIL">Juvenil</option>
-                    </select>
-                    <select id="fight-phase-filter">
-                        <option value="">Todas as Fases</option>
-                        <option value="Oitavas de Final">Oitavas de Final</option>
-                        <option value="Quartas de Final">Quartas de Final</option>
-                        <option value="Semi Final">Semi Final</option>
-                        <option value="Final">Final</option>
-                        <option value="A Definir">A Definir</option>
-                    </select>
-                    <select id="fight-view" style="min-width:160px;padding:0.75rem 1rem;border:2px solid #ddd;border-radius:25px;">
-                        <option value="table">Tabela</option>
-                        <option value="cards">Cards</option>
-                    </select>
-                    <button id="add-fight" class="edit-btn" aria-label="Adicionar Luta" title="Adicionar Luta">+ Add Fight</button>
-                </div>
-
-                <div class="results-table-container">
-                    <table class="results-table" id="results-table">
-                        <thead>
-                            <tr>
-                                <th>Atleta</th>
-                                <th>Categoria</th>
-                                <th>Peso</th>
-                                <th>Oponente</th>
-                                <th>Fase</th>
-                                <th>Resultado</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Results will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="athletes-grid" id="fights-grid"></div>
-            </section>
-
-            <!-- Analysis Section -->
-            <section id="analysis" class="section">
-                <h2 class="section-title">Análise de Performance</h2>
-                
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h3>Aproveitamento por Atleta</h3>
-                        <canvas id="athletePerformanceChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>Aproveitamento por Round</h3>
-                        <canvas id="roundPerformanceChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>Penalidades por Técnico</h3>
-                        <canvas id="penaltiesByCoachChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>Penalidades por Atleta</h3>
-                        <canvas id="penaltiesByAthleteChart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="individual-charts" id="individual-charts">
-                    <!-- Individual athlete charts will be populated by JavaScript -->
-                </div>
-                <div id="analysis-filter-bar" class="filter-controls" style="margin-top:1rem;"></div>
-                <div id="analysis-export-bar"></div>
-            </section>
+        <form id="coach-form" class="modal-form">
+          <div class="modal-body">
+            <input type="hidden" id="coach-id">
+            <label>
+              <span>Nome</span>
+              <input id="coach-name" type="text" required>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="coach-cancel" class="secondary">Cancelar</button>
+            <button type="submit" id="coach-save" class="primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="modal-penalty" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="penalty-modal-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="penalty-modal-title">Penalidade</h3>
+          <button type="button" id="penalty-close" class="icon-btn" aria-label="Fechar">×</button>
         </div>
-    </main>
-
-    <!-- Modal for editing results -->
-    <div id="edit-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
-        <div class="modal-content" role="document" tabindex="-1">
-            <span class="close" aria-label="Fechar">&times;</span>
-            <h2 id="edit-modal-title">Editar Resultado</h2>
-            <form id="edit-form">
-                <div class="form-group">
-                    <label for="athlete-name">Atleta:</label>
-                    <input type="text" id="athlete-name" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="opponent-name">Oponente:</label>
-                    <input type="text" id="opponent-name">
-                </div>
-                <div class="form-group">
-                    <label for="opponent-team">Equipe do Oponente:</label>
-                    <input type="text" id="opponent-team">
-                </div>
-                <div class="form-group">
-                    <label for="stage">Fase:</label>
-                    <select id="stage">
-                        <option value="Oitavas de Final">Oitavas de Final</option>
-                        <option value="Quartas de Final">Quartas de Final</option>
-                        <option value="Semi Final">Semi Final</option>
-                        <option value="Final">Final</option>
-                        <option value="A Definir">A Definir</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="coach">Técnico:</label>
-                    <input type="text" id="coach" list="coach-options">
-                    <datalist id="coach-options"></datalist>
-                </div>
-                
-                <div class="rounds-section">
-                    <h3>Rounds</h3>
-                    <div id="rounds-container">
-                        <!-- Rounds will be populated dynamically -->
-                    </div>
-                    <button type="button" id="add-round">Adicionar Round</button>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="submit">Salvar</button>
-                    <button type="button" id="cancel-edit">Cancelar</button>
-                </div>
-            </form>
+        <form id="penalty-form" class="modal-form">
+          <div class="modal-body">
+            <input type="hidden" id="penalty-id">
+            <label>
+              <span>Nome</span>
+              <input id="penalty-name" type="text" required>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="penalty-cancel" class="secondary">Cancelar</button>
+            <button type="submit" id="penalty-save" class="primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="modal-confirm" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="confirm-title">Confirmação</h3>
+          <button type="button" id="confirm-close" class="icon-btn" aria-label="Fechar">×</button>
         </div>
+        <div class="modal-form">
+          <div class="modal-body">
+            <p id="confirm-message"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="confirm-cancel" class="secondary">Cancelar</button>
+            <button type="button" id="confirm-ok" class="primary">OK</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script type="module" src="script.js"></script>
-    <script src="advanced-features.js"></script>
+    <!-- Modal de detalhes do atleta -->
+    <div id="modal-athlete-details" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="athlete-details-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="athlete-details-title">Detalhes do Atleta</h3>
+          <button type="button" id="athlete-details-close" class="icon-btn" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body" id="athlete-details-content">
+          <!-- Conteúdo será preenchido dinamicamente -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="athlete-details-ok" class="primary">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de detalhes da luta -->
+    <div id="modal-fight-details" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="fight-details-title">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="fight-details-title">Detalhes da Luta</h3>
+          <button type="button" id="fight-details-close" class="icon-btn" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body" id="fight-details-content">
+          <!-- Conteúdo será preenchido dinamicamente -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="fight-details-ok" class="primary">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
