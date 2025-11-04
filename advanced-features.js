@@ -287,7 +287,7 @@ const AthletesUI = (()=>{
       `<td data-label="Nome">${escapeHtml(a.name)}</td>`+
       `<td data-label="Categoria">${escapeHtml(a.category||'')}</td>`+
       `<td data-label="Graduação">${escapeHtml(a.graduation||'')}</td>`+
-      `<td data-label="V / D — L">${statsHtml}</td>`+
+      `<td data-label="V / D — L"><span>${statsHtml}</span></td>`+
       `<td class="col-actions" data-label="Ações">`+
       `<button class="action" data-action="edit" data-id="${a.id}" aria-label="Editar" title="Editar"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.34a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg></button>`+
       `<button class="action" data-action="delete" data-id="${a.id}" aria-label="Excluir" title="Excluir"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M9 3a1 1 0 00-1 1v1H4v2h16V5h-4V4a1 1 0 00-1-1H9zm-3 7h2v9H6v-9zm5 0h2v9h-2v-9zm5 0h2v9h-2v-9z"/></svg></button>`+
